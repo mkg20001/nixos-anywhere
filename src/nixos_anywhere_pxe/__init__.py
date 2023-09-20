@@ -335,22 +335,24 @@ def ssh_private_key() -> Iterator[SshKey]:
 def nixos_anywhere(
     ip: str, flake: str, ssh_private_key: Path, nixos_anywhere_args: List[str]
 ) -> None:
+    cmd = [
+        # FIXME: path
+        "bash",
+        str(NIXOS_ANYWHERE_SH),
+        "--flake",
+        flake,
+        "-L",
+        # do not substitute because we do not have internet and copying locally is faster.
+        "--no-substitute-on-destination",
+        ip,
+    ] + nixos_anywhere_args
     run(
-        [
-            # FIXME: path
-            "bash",
-            str(NIXOS_ANYWHERE_SH),
-            "--flake",
-            flake,
-            "-L",
-            # do not substitute because we do not have internet and copying locally is faster.
-            "--no-substitute-on-destination",
-            ip,
-        ]
-        + nixos_anywhere_args,
+        cmd,
         extra_env=dict(SSH_PRIVATE_KEY=ssh_private_key.read_text()),
         check=False,
     )
+    print("If the installation failed, you may run the install command manually again:")
+    print(f"{cmd} -i {ssh_private_key.read_text()}")
 
 
 @contextmanager
